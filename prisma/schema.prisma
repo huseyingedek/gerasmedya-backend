@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon için connection pooling — büyük trafikte açabilirsin
+  // directUrl = env("DIRECT_URL")
+}
+
+enum Plan {
+  AYLIK
+  YILLIK
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+model User {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String
+  plan        Plan      @default(AYLIK)
+  planExpiry  DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  payments    Payment[]
+  progress    Progress[]
+
+  @@map("users")
+}
+
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  plan          Plan
+  amount        Float
+  currency      String        @default("TRY")
+  iyzicoPaymentId String?
+  conversationId  String?
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model Progress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  contentSlug String   // video slug veya article id
+  contentType String   // "video" | "article"
+  strategy    String   // "dijital-kusatma" vb.
+  completedAt DateTime @default(now())
+
+  @@unique([userId, contentSlug])
+  @@map("progress")
+}

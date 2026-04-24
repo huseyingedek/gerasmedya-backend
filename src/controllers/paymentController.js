@@ -3,11 +3,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../prisma");
 
-const iyzipay = new Iyzipay({
-  apiKey: process.env.IYZICO_API_KEY,
-  secretKey: process.env.IYZICO_SECRET_KEY,
-  uri: process.env.IYZICO_BASE_URL || "https://sandbox-api.iyzipay.com",
-});
+let iyzipay = null;
+
+if (process.env.IYZICO_API_KEY && process.env.IYZICO_SECRET_KEY) {
+  iyzipay = new Iyzipay({
+    apiKey: process.env.IYZICO_API_KEY,
+    secretKey: process.env.IYZICO_SECRET_KEY,
+    uri: process.env.IYZICO_BASE_URL || "https://sandbox-api.iyzipay.com",
+  });
+}
 
 const PLANS = {
   aylik:  { price: "499.00",  amount: 499,  currency: "TRY", days: 30,  prismaEnum: "AYLIK"  },

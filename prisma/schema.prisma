@@ -3,10 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  // Neon için connection pooling — büyük trafikte açabilirsin
-  // directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Plan {
@@ -25,6 +23,7 @@ model User {
   name        String
   email       String    @unique
   password    String
+  role        String    @default("user")   // "user" | "admin"
   plan        Plan      @default(AYLIK)
   planExpiry  DateTime?
   isActive    Boolean   @default(true)
@@ -37,31 +36,100 @@ model User {
   @@map("users")
 }
 
-
 model Payment {
-  id            String        @id @default(cuid())
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  plan          Plan
-  amount        Float
-  currency      String        @default("TRY")
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  plan            Plan
+  amount          Float
+  currency        String        @default("TRY")
   iyzicoPaymentId String?
   conversationId  String?
-  status        PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
 
   @@map("payments")
 }
 
 model Progress {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  contentSlug String   // video slug veya article id
-  contentType String   // "video" | "article"
-  strategy    String   // "dijital-kusatma" vb.
-  completedAt DateTime @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  contentSlug  String
+  contentType  String    // "video" | "article"
+  strategy     String
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  position     Float     @default(0)
+  duration     Float     @default(0)
+  watchPercent Int       @default(0)
+  updatedAt    DateTime  @updatedAt
 
   @@unique([userId, contentSlug])
   @@map("progress")
+}
+
+// ─── Kurs & İçerik Modelleri ─────────────────────────────────────────
+
+model Course {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique
+  title         String
+  desc          String?  @db.Text
+  icon          String   @default("🎓")
+  category      String   @default("strateji")   // "strateji" | "reklam" | "analitik" | "icerik"
+  categoryLabel String   @default("Strateji")
+  gradient      String   @default("from-yellow-900/40 to-amber-950/60")
+  accentColor   String   @default("#C9A84C")
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("courses")
+}
+
+model Video {
+  id          Int        @id @default(autoincrement())
+  slug        String     @unique
+  filename    String
+  title       String
+  description String?    @db.Text
+  duration    String?
+  level       String?
+  courseSlug  String     // hangi kursa ait: "dijital-kusatma" vb.
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  resources   Resource[]
+
+  @@map("videos")
+}
+
+model Article {
+  id         Int        @id @default(autoincrement())
+  courseSlug String
+  title      String
+  duration   String?
+  isTemplate Boolean    @default(false)
+  content    Json       // paragraphs array
+  order      Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  resources  Resource[]
+
+  @@map("articles")
+}
+
+model Resource {
+  id        Int      @id @default(autoincrement())
+  title     String
+  url       String
+  type      String   @default("link")  // "link" | "pdf" | "file"
+  videoId   Int?
+  articleId Int?
+  video     Video?   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("resources")
 }

@@ -1,3 +1,10 @@
 node_modules/
 .env
 .env.local
+
+# Videolar Git'e gitmesin — sunucuya elle yükle
+uploads/videos/
+
+# Ama klasörün kendisi kalsın
+!uploads/.gitkeep
+!uploads/videos/.gitkeep

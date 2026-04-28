@@ -4,7 +4,7 @@ const prisma = require("../prisma");
 
 function signToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, name: user.name, plan: user.plan },
+    { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role || "user" },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
   );
@@ -20,6 +20,7 @@ async function login(req, res) {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user)
       return res.status(400).json({ message: "Bu e-posta ile kayıtlı kullanıcı bulunamadı." });
+
 
     if (!user.isActive)
       return res.status(403).json({ message: "Hesabınız aktif değil." });
@@ -37,7 +38,7 @@ async function login(req, res) {
     const token = signToken(user);
     return res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, plan: user.plan },
+      user: { id: user.id, name: user.name, email: user.email, plan: user.plan, role: user.role || "user" },
     });
   } catch (err) {
     console.error("Login error:", err);
@@ -50,7 +51,7 @@ async function getMe(req, res) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true, plan: true, planExpiry: true, isActive: true },
+      select: { id: true, name: true, email: true, plan: true, planExpiry: true, isActive: true, role: true },
     });
     if (!user) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
     res.json({ user });

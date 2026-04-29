@@ -31,6 +31,7 @@ app.use("/api/progress", require("./routes/progress"));
 app.use("/api/courses",  require("./routes/courses"));
 app.use("/api/articles", require("./routes/articles"));
 app.use("/api/admin",    require("./routes/admin"));
+app.use("/api/engage",   require("./routes/engage"));
 
 // ── Health check
 app.get("/", (req, res) => {

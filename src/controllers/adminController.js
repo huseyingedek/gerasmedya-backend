@@ -90,15 +90,30 @@ async function getUploadUrl(req, res) {
 // YAZI YÖNETİMİ
 // ═══════════════════════════════════════════
 
-// GET /api/admin/articles?course=dijital-kusatma
+// GET /api/admin/articles?course=dijital-kusatma&page=1&limit=20
 async function listArticles(req, res) {
-  const { course } = req.query;
-  const articles = await prisma.article.findMany({
-    where: course ? { courseSlug: course } : undefined,
-    include: { resources: true },
-    orderBy: [{ courseSlug: "asc" }, { order: "asc" }],
+  const { course, page, limit } = req.query;
+  const take  = Math.min(parseInt(limit) || 20, 200); // max 200
+  const skip  = ((parseInt(page) || 1) - 1) * take;
+  const where = course ? { courseSlug: course } : undefined;
+
+  const [articles, total] = await Promise.all([
+    prisma.article.findMany({
+      where,
+      include: { resources: true },
+      orderBy: [{ courseSlug: "asc" }, { order: "asc" }],
+      skip,
+      take,
+    }),
+    prisma.article.count({ where }),
+  ]);
+
+  res.json({
+    articles,
+    total,
+    page:       parseInt(page) || 1,
+    totalPages: Math.ceil(total / take) || 1,
   });
-  res.json({ articles });
 }
 
 // POST /api/admin/articles

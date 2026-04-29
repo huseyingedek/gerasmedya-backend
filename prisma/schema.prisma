@@ -133,3 +133,37 @@ model Resource {
 
   @@map("resources")
 }
+
+model VideoNote {
+  id        String   @id @default(cuid())
+  userId    String
+  videoSlug String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, videoSlug])
+  @@map("video_notes")
+}
+
+model VideoRating {
+  id        String   @id @default(cuid())
+  userId    String
+  videoSlug String
+  rating    Int      // 1-5
+  createdAt DateTime @default(now())
+
+  @@unique([userId, videoSlug])
+  @@map("video_ratings")
+}
+
+model VideoComment {
+  id        String   @id @default(cuid())
+  userId    String
+  userName  String
+  videoSlug String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("video_comments")
+}
